@@ -1,8 +1,4 @@
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      success: false,
-      error: "Method not allowed"
+error: "Method not allowed"
     });
   }
 
@@ -45,53 +41,7 @@ Yêu cầu:
 - Viết ngắn gọn.
 - Dễ đọc.
 - Tự nhiên như người thật.
-- Có thể dùng emoji.
-- Chỉ trả về nội dung bài viết.
-- Không giải thích.`
-        })
-      }
-    );
-
-    const raw = await response.text();
-
-    let data;
-
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      return res.status(502).json({
-        success: false,
-        error: "OpenAI trả về dữ liệu không hợp lệ.",
-        raw: raw.substring(0, 500)
-      });
-    }
-
+- Có 
     if (!response.ok) {
-      return res.status(response.status).json({
-        success: false,
-        error: data
-      });
-    }
-
-    const text = data.output_text;
-
-    if (!text) {
-      return res.status(500).json({
-        success: false,
-        error: "AI không trả về nội dung.",
-        response: data
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      text: text.trim()
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-}
+      
+      
