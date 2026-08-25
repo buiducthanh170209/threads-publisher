@@ -12,39 +12,18 @@ export default async function handler(req, res) {
     if (!apiKey) {
       return res.status(500).json({
         success: false,
-        error: "OPENAI_API_KEY chưa được cấu hình."
+        error: "Chưa có OPENAI_API_KEY trên Vercel."
       });
     }
 
     const { topic, style } = req.body || {};
 
-    if (!topic || !topic.trim()) {
+    if (!topic?.trim()) {
       return res.status(400).json({
         success: false,
-        error: "Bạn chưa nhập chủ đề."
+        error: "Chưa nhập chủ đề."
       });
     }
-
-    const prompt = `
-Bạn là AI chuyên viết nội dung ngắn cho Threads.
-
-Hãy viết một bài Threads bằng tiếng Việt.
-
-Chủ đề:
-${topic}
-
-Phong cách:
-${style || "tự nhiên, ngắn gọn, dễ đọc"}
-
-Yêu cầu:
-- 1 bài duy nhất.
-- Không giải thích.
-- Không đặt trong dấu ngoặc kép.
-- Không nói "đây là bài viết".
-- Tối đa khoảng 400 ký tự.
-- Có thể dùng emoji nhưng không lạm dụng.
-- Không bịa thông tin cụ thể nếu chủ đề cần dữ kiện.
-`;
 
     const response = await fetch(
       "https://api.openai.com/v1/responses",
@@ -56,7 +35,19 @@ Yêu cầu:
         },
         body: JSON.stringify({
           model: "gpt-5.6",
-          input: prompt
+          input: `Viết một bài Threads bằng tiếng Việt.
+
+Chủ đề: ${topic}
+
+Phong cách: ${style || "tự nhiên, cuốn hút"}
+
+Yêu cầu:
+- Viết ngắn gọn.
+- Dễ đọc.
+- Tự nhiên như người thật.
+- Có thể dùng emoji.
+- Chỉ trả về nội dung bài viết.
+- Không giải thích.`
         })
       }
     );
@@ -71,7 +62,7 @@ Yêu cầu:
       return res.status(502).json({
         success: false,
         error: "OpenAI trả về dữ liệu không hợp lệ.",
-        raw: raw.slice(0, 1000)
+        raw: raw.substring(0, 500)
       });
     }
 
@@ -82,19 +73,13 @@ Yêu cầu:
       });
     }
 
-    const text =
-      data.output_text ||
-      data.output
-        ?.flatMap(item => item.content || [])
-        ?.filter(item => item.type === "output_text")
-        ?.map(item => item.text)
-        ?.join("") ||
-      "";
+    const text = data.output_text;
 
-    if (!text.trim()) {
-      return res.status(502).json({
+    if (!text) {
+      return res.status(500).json({
         success: false,
-        error: "AI không tạo được nội dung."
+        error: "AI không trả về nội dung.",
+        response: data
       });
     }
 
