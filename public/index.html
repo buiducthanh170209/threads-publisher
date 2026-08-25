@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Threads Publisher</title>
+  <title>AI Threads Publisher</title>
 
   <style>
     * {
@@ -15,182 +14,350 @@
       margin: 0;
       min-height: 100vh;
       font-family: Arial, sans-serif;
-      background: #f4f4f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+      background: #f3f4f6;
+      padding: 25px;
     }
 
-    .container {
-      width: 100%;
-      max-width: 650px;
+    .app {
+      max-width: 700px;
+      margin: auto;
       background: white;
-      padding: 30px;
-      border-radius: 22px;
+      border-radius: 24px;
+      padding: 28px;
       box-shadow: 0 15px 50px rgba(0,0,0,.08);
     }
 
     h1 {
-      margin-top: 0;
       text-align: center;
+      margin-top: 0;
     }
 
-    textarea {
+    .subtitle {
+      text-align: center;
+      color: #777;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 16px 0 8px;
+    }
+
+    input,
+    textarea,
+    select {
       width: 100%;
-      height: 200px;
-      padding: 16px;
-      resize: vertical;
+      padding: 14px;
       border: 1px solid #ddd;
-      border-radius: 14px;
+      border-radius: 12px;
       font-size: 16px;
       outline: none;
     }
 
-    textarea:focus {
-      border-color: #111;
+    textarea {
+      min-height: 180px;
+      resize: vertical;
     }
 
-    .count {
-      text-align: right;
-      color: #777;
-      margin-top: 6px;
-      font-size: 13px;
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #111;
     }
 
     button {
       width: 100%;
-      margin-top: 18px;
-      padding: 16px;
       border: 0;
-      border-radius: 14px;
-      background: #000;
-      color: white;
-      font-size: 17px;
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 14px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      background: #000;
+      color: white;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111;
     }
 
     button:disabled {
       opacity: .5;
+      cursor: not-allowed;
     }
 
-    #result {
-      display: none;
+    .status {
       margin-top: 18px;
-      padding: 15px;
+      padding: 14px;
       border-radius: 12px;
       white-space: pre-wrap;
       word-break: break-word;
+      display: none;
     }
 
     .success {
-      display: block !important;
+      display: block;
       background: #e8f8ed;
       color: #176b35;
     }
 
     .error {
-      display: block !important;
-      background: #ffeaea;
+      display: block;
+      background: #ffe8e8;
       color: #a00000;
+    }
+
+    .loading {
+      display: block;
+      background: #f1f1f1;
+      color: #555;
+    }
+
+    .counter {
+      text-align: right;
+      color: #777;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .divider {
+      margin: 28px 0;
+      border: 0;
+      border-top: 1px solid #eee;
     }
   </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="app">
 
-  <h1>🧵 Threads Publisher</h1>
+  <h1>🤖 AI Threads Publisher</h1>
+
+  <div class="subtitle">
+    AI viết bài → bạn xem → đăng lên Threads
+  </div>
+
+  <label for="topic">💡 Chủ đề</label>
+
+  <input
+    id="topic"
+    type="text"
+    placeholder="Ví dụ: kiếm tiền online cho học sinh"
+  >
+
+  <label for="style">🎨 Phong cách</label>
+
+  <select id="style">
+    <option value="tự nhiên, gần gũi">Tự nhiên, gần gũi</option>
+    <option value="viral, cuốn hút">Viral, cuốn hút</option>
+    <option value="hài hước">Hài hước</option>
+    <option value="chuyên nghiệp">Chuyên nghiệp</option>
+    <option value="ngắn gọn, mạnh mẽ">Ngắn gọn, mạnh mẽ</option>
+  </select>
+
+  <button id="generate">
+    ✨ AI VIẾT BÀI
+  </button>
+
+  <hr class="divider">
+
+  <label for="content">📝 Nội dung</label>
 
   <textarea
-    id="text"
+    id="content"
     maxlength="500"
-    placeholder="Nhập nội dung muốn đăng lên Threads..."
+    placeholder="Bài viết AI sẽ xuất hiện ở đây..."
   ></textarea>
 
-  <div class="count">
-    <span id="count">0</span>/500
+  <div class="counter">
+    <span id="counter">0</span>/500
   </div>
+
+  <button id="rewrite" class="secondary">
+    🔄 VIẾT LẠI
+  </button>
 
   <button id="publish">
     🚀 ĐĂNG LÊN THREADS
   </button>
 
-  <div id="result"></div>
+  <div id="status" class="status"></div>
 
 </div>
 
 <script>
-  const text = document.getElementById("text");
-  const count = document.getElementById("count");
-  const button = document.getElementById("publish");
-  const result = document.getElementById("result");
+  const topic = document.getElementById("topic");
+  const style = document.getElementById("style");
+  const content = document.getElementById("content");
 
-  text.addEventListener("input", () => {
-    count.textContent = text.value.length;
+  const generateButton = document.getElementById("generate");
+  const rewriteButton = document.getElementById("rewrite");
+  const publishButton = document.getElementById("publish");
+
+  const status = document.getElementById("status");
+  const counter = document.getElementById("counter");
+
+  content.addEventListener("input", () => {
+    counter.textContent = content.value.length;
   });
 
-  button.addEventListener("click", async () => {
-    const content = text.value.trim();
+  function showStatus(message, type) {
+    status.textContent = message;
+    status.className = "status " + type;
+  }
 
-    if (!content) {
-      showResult("❌ Bạn chưa nhập nội dung.", false);
+  function setGenerating(loading) {
+    generateButton.disabled = loading;
+    rewriteButton.disabled = loading;
+
+    generateButton.textContent =
+      loading ? "⏳ AI đang viết..." : "✨ AI VIẾT BÀI";
+  }
+
+  async function generatePost() {
+
+    const topicValue = topic.value.trim();
+
+    if (!topicValue) {
+      showStatus("❌ Hãy nhập chủ đề trước.", "error");
       return;
     }
 
-    button.disabled = true;
-    button.textContent = "⏳ Đang đăng...";
-    result.className = "";
-    result.style.display = "none";
+    setGenerating(true);
+    showStatus("🤖 AI đang tạo bài Threads...", "loading");
 
     try {
-      const response = await fetch("/api/publish", {
+
+      const response = await fetch("/api/generate", {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json"
         },
+
         body: JSON.stringify({
-          text: content
+          topic: topicValue,
+          style: style.value
         })
       });
 
       const data = await response.json();
 
-      if (data.success) {
-        showResult(
-          "🎉 Đăng thành công!\n\nThread ID: " +
-          data.thread_id,
-          true
+      if (!data.success) {
+
+        showStatus(
+          "❌ AI tạo bài thất bại.\n\n" +
+          JSON.stringify(data, null, 2),
+          "error"
         );
 
-        text.value = "";
-        count.textContent = "0";
+        return;
+      }
+
+      content.value = data.text;
+      counter.textContent = data.text.length;
+
+      showStatus(
+        "✅ AI đã tạo bài. Bạn có thể chỉnh sửa trước khi đăng.",
+        "success"
+      );
+
+    } catch (error) {
+
+      showStatus(
+        "❌ Không kết nối được AI.\n\n" +
+        error.message,
+        "error"
+      );
+
+    } finally {
+
+      setGenerating(false);
+    }
+  }
+
+  generateButton.addEventListener("click", generatePost);
+
+  rewriteButton.addEventListener("click", generatePost);
+
+  publishButton.addEventListener("click", async () => {
+
+    const text = content.value.trim();
+
+    if (!text) {
+      showStatus(
+        "❌ Chưa có nội dung để đăng.",
+        "error"
+      );
+
+      return;
+    }
+
+    publishButton.disabled = true;
+    publishButton.textContent = "⏳ Đang đăng...";
+
+    showStatus(
+      "📡 Đang gửi bài lên Threads...",
+      "loading"
+    );
+
+    try {
+
+      const response = await fetch("/api/publish", {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          text: text
+        })
+
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+
+        showStatus(
+          "🎉 ĐĂNG THÀNH CÔNG!\n\n" +
+          "Thread ID: " +
+          data.thread_id,
+          "success"
+        );
+
       } else {
-        showResult(
+
+        showStatus(
           "❌ Đăng thất bại.\n\n" +
           JSON.stringify(data, null, 2),
-          false
+          "error"
         );
+
       }
 
     } catch (error) {
-      showResult(
-        "❌ Không kết nối được máy chủ.\n\n" +
+
+      showStatus(
+        "❌ Lỗi kết nối server.\n\n" +
         error.message,
-        false
+        "error"
       );
+
+    } finally {
+
+      publishButton.disabled = false;
+      publishButton.textContent = "🚀 ĐĂNG LÊN THREADS";
+
     }
 
-    button.disabled = false;
-    button.textContent = "🚀 ĐĂNG LÊN THREADS";
   });
-
-  function showResult(message, success) {
-    result.textContent = message;
-    result.className = success ? "success" : "error";
-  }
 </script>
 
 </body>
