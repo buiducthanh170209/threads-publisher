@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Threads Publisher</title>
+  <title>TANH AI Threads</title>
 
   <style>
     * {
@@ -12,36 +12,44 @@
 
     body {
       margin: 0;
-      min-height: 100vh;
       font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      padding: 25px;
+      background: #f4f5f7;
+      color: #111;
     }
 
-    .app {
-      max-width: 700px;
-      margin: auto;
-      background: white;
-      border-radius: 24px;
+    .container {
+      width: min(1000px, 94%);
+      margin: 30px auto;
+    }
+
+    .header {
+      background: #000;
+      color: white;
       padding: 28px;
-      box-shadow: 0 15px 50px rgba(0,0,0,.08);
+      border-radius: 24px;
+      margin-bottom: 20px;
     }
 
-    h1 {
-      text-align: center;
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: .75;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 25px rgba(0,0,0,.05);
+    }
+
+    .card h2 {
       margin-top: 0;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #777;
-      margin-bottom: 25px;
-    }
-
-    label {
-      display: block;
-      font-weight: bold;
-      margin: 16px 0 8px;
     }
 
     input,
@@ -55,33 +63,24 @@
       outline: none;
     }
 
-    textarea {
-      min-height: 180px;
-      resize: vertical;
-    }
-
     input:focus,
-    textarea:focus,
-    select:focus {
-      border-color: #111;
+    textarea:focus {
+      border-color: #000;
     }
 
     button {
-      width: 100%;
-      border: 0;
+      border: none;
       border-radius: 12px;
-      padding: 15px;
-      margin-top: 14px;
-      font-size: 16px;
+      padding: 13px 18px;
+      font-size: 15px;
       font-weight: bold;
       cursor: pointer;
       background: #000;
       color: white;
     }
 
-    button.secondary {
-      background: #e5e7eb;
-      color: #111;
+    button:hover {
+      opacity: .85;
     }
 
     button:disabled {
@@ -89,13 +88,121 @@
       cursor: not-allowed;
     }
 
+    .main-button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 16px;
+      font-size: 16px;
+    }
+
+    .product {
+      display: none;
+    }
+
+    .product-info {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 20px;
+    }
+
+    .main-image {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 16px;
+      background: #eee;
+    }
+
+    .product-title {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .description {
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .image-list {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 12px 0;
+    }
+
+    .image-item {
+      flex: 0 0 80px;
+      height: 80px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+
+    .image-item.selected {
+      border-color: #000;
+    }
+
+    .image-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .posts {
+      display: none;
+    }
+
+    .post {
+      border: 1px solid #e5e5e5;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .post-number {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .post textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    .post-image {
+      width: 140px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin: 12px 0;
+      background: #eee;
+      display: none;
+    }
+
+    .post-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .post-actions button {
+      flex: 1;
+    }
+
+    .secondary {
+      background: #eee;
+      color: #111;
+    }
+
     .status {
-      margin-top: 18px;
+      display: none;
       padding: 14px;
       border-radius: 12px;
+      margin-top: 15px;
       white-space: pre-wrap;
       word-break: break-word;
-      display: none;
     }
 
     .success {
@@ -106,258 +213,772 @@
 
     .error {
       display: block;
-      background: #ffe8e8;
+      background: #ffe7e7;
       color: #a00000;
     }
 
     .loading {
       display: block;
-      background: #f1f1f1;
+      background: #f0f0f0;
       color: #555;
     }
 
-    .counter {
-      text-align: right;
+    .small {
       color: #777;
       font-size: 13px;
-      margin-top: 5px;
+      margin-top: 8px;
     }
 
-    .divider {
-      margin: 28px 0;
-      border: 0;
-      border-top: 1px solid #eee;
+    @media (max-width: 700px) {
+      .product-info {
+        grid-template-columns: 1fr;
+      }
+
+      .main-image {
+        max-width: 300px;
+      }
+
+      .post-actions {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<div class="app">
+<div class="container">
 
-  <h1>🤖 AI Threads Publisher</h1>
-
-  <div class="subtitle">
-    AI viết bài → bạn xem → đăng lên Threads
+  <div class="header">
+    <h1>🤖 TANH AI THREADS</h1>
+    <p>Sản phẩm → AI chọn ảnh → 5 bài Threads → bạn chọn và đăng</p>
   </div>
 
-  <label for="topic">💡 Chủ đề</label>
+  <div class="card">
 
-  <input
-    id="topic"
-    type="text"
-    placeholder="Ví dụ: kiếm tiền online cho học sinh"
+    <h2>🔗 Sản phẩm</h2>
+
+    <input
+      id="productUrl"
+      type="url"
+      placeholder="Dán link sản phẩm Taobao, AliExpress, Shopee..."
+    >
+
+    <div class="small">
+      Website phải cho phép hệ thống truy cập dữ liệu thì mới lấy được ảnh tự động.
+    </div>
+
+    <button
+      id="getProduct"
+      class="main-button"
+    >
+      🔍 LẤY SẢN PHẨM
+    </button>
+
+    <div
+      id="productStatus"
+      class="status"
+    ></div>
+
+  </div>
+
+
+  <div
+    id="productCard"
+    class="card product"
   >
 
-  <label for="style">🎨 Phong cách</label>
+    <h2>🛍️ Sản phẩm</h2>
 
-  <select id="style">
-    <option value="tự nhiên, gần gũi">Tự nhiên, gần gũi</option>
-    <option value="viral, cuốn hút">Viral, cuốn hút</option>
-    <option value="hài hước">Hài hước</option>
-    <option value="chuyên nghiệp">Chuyên nghiệp</option>
-    <option value="ngắn gọn, mạnh mẽ">Ngắn gọn, mạnh mẽ</option>
-  </select>
+    <div class="product-info">
 
-  <button id="generate">
-    ✨ AI VIẾT BÀI
-  </button>
+      <img
+        id="mainImage"
+        class="main-image"
+        alt="Ảnh sản phẩm"
+      >
 
-  <hr class="divider">
+      <div>
 
-  <label for="content">📝 Nội dung</label>
+        <div
+          id="productTitle"
+          class="product-title"
+        ></div>
 
-  <textarea
-    id="content"
-    maxlength="500"
-    placeholder="Bài viết AI sẽ xuất hiện ở đây..."
-  ></textarea>
+        <div
+          id="productDescription"
+          class="description"
+        ></div>
 
-  <div class="counter">
-    <span id="counter">0</span>/500
+      </div>
+
+    </div>
+
+
+    <h3>🖼️ Ảnh sản phẩm</h3>
+
+    <div
+      id="imageList"
+      class="image-list"
+    ></div>
+
+
+    <button
+      id="generatePosts"
+      class="main-button"
+    >
+      ✨ AI TẠO 5 BÀI THREADS
+    </button>
+
   </div>
 
-  <button id="rewrite" class="secondary">
-    🔄 VIẾT LẠI
-  </button>
 
-  <button id="publish">
-    🚀 ĐĂNG LÊN THREADS
-  </button>
+  <div
+    id="postsCard"
+    class="card posts"
+  >
 
-  <div id="status" class="status"></div>
+    <h2>✨ 5 bài Threads</h2>
+
+    <div
+      id="postsContainer"
+    ></div>
+
+  </div>
+
 
 </div>
 
+
 <script>
-  const topic = document.getElementById("topic");
-  const style = document.getElementById("style");
-  const content = document.getElementById("content");
 
-  const generateButton = document.getElementById("generate");
-  const rewriteButton = document.getElementById("rewrite");
-  const publishButton = document.getElementById("publish");
+  const productUrl =
+    document.getElementById("productUrl");
 
-  const status = document.getElementById("status");
-  const counter = document.getElementById("counter");
+  const getProduct =
+    document.getElementById("getProduct");
 
-  content.addEventListener("input", () => {
-    counter.textContent = content.value.length;
-  });
+  const productStatus =
+    document.getElementById("productStatus");
 
-  function showStatus(message, type) {
-    status.textContent = message;
-    status.className = "status " + type;
+  const productCard =
+    document.getElementById("productCard");
+
+  const productTitle =
+    document.getElementById("productTitle");
+
+  const productDescription =
+    document.getElementById("productDescription");
+
+  const mainImage =
+    document.getElementById("mainImage");
+
+  const imageList =
+    document.getElementById("imageList");
+
+  const generatePosts =
+    document.getElementById("generatePosts");
+
+  const postsCard =
+    document.getElementById("postsCard");
+
+  const postsContainer =
+    document.getElementById("postsContainer");
+
+
+  let productData = null;
+
+  let selectedImage = "";
+
+
+  function showStatus(element, message, type) {
+
+    element.textContent = message;
+
+    element.className =
+      "status " + type;
+
   }
 
-  function setGenerating(loading) {
-    generateButton.disabled = loading;
-    rewriteButton.disabled = loading;
 
-    generateButton.textContent =
-      loading ? "⏳ AI đang viết..." : "✨ AI VIẾT BÀI";
-  }
+  function showImages(images) {
 
-  async function generatePost() {
+    imageList.innerHTML = "";
 
-    const topicValue = topic.value.trim();
+    if (!images || images.length === 0) {
 
-    if (!topicValue) {
-      showStatus("❌ Hãy nhập chủ đề trước.", "error");
+      imageList.innerHTML =
+        "<div class='small'>Không tìm thấy ảnh tự động.</div>";
+
+      selectedImage = "";
+
+      mainImage.style.display = "none";
+
       return;
+
     }
 
-    setGenerating(true);
-    showStatus("🤖 AI đang tạo bài Threads...", "loading");
+
+    selectedImage = images[0];
+
+    mainImage.src = selectedImage;
+
+    mainImage.style.display = "block";
+
+
+    images.forEach((image, index) => {
+
+      const item =
+        document.createElement("div");
+
+      item.className =
+        "image-item" +
+        (index === 0 ? " selected" : "");
+
+
+      const img =
+        document.createElement("img");
+
+      img.src = image;
+
+      img.alt = "Ảnh " + (index + 1);
+
+
+      item.appendChild(img);
+
+      item.addEventListener("click", () => {
+
+        selectedImage = image;
+
+        mainImage.src = image;
+
+
+        document
+          .querySelectorAll(".image-item")
+          .forEach(el => {
+
+            el.classList.remove("selected");
+
+          });
+
+
+        item.classList.add("selected");
+
+
+        document
+          .querySelectorAll(".post-image")
+          .forEach(img => {
+
+            img.src = selectedImage;
+            img.style.display = "block";
+
+          });
+
+      });
+
+
+      imageList.appendChild(item);
+
+    });
+
+  }
+
+
+  getProduct.addEventListener("click", async () => {
+
+    const url =
+      productUrl.value.trim();
+
+
+    if (!url) {
+
+      showStatus(
+        productStatus,
+        "❌ Hãy dán link sản phẩm trước.",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    getProduct.disabled = true;
+
+    getProduct.textContent =
+      "⏳ Đang lấy sản phẩm...";
+
+
+    showStatus(
+      productStatus,
+      "🌐 Đang đọc thông tin sản phẩm...",
+      "loading"
+    );
+
 
     try {
 
-      const response = await fetch("/api/generate", {
-        method: "POST",
+      const response =
+        await fetch("/api/product", {
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+          method: "POST",
 
-        body: JSON.stringify({
-          topic: topicValue,
-          style: style.value
-        })
-      });
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-      const data = await response.json();
+          body: JSON.stringify({
+            url
+          })
+
+        });
+
+
+      const data =
+        await response.json();
+
 
       if (!data.success) {
 
         showStatus(
-          "❌ AI tạo bài thất bại.\n\n" +
+          productStatus,
+          "❌ Không lấy được sản phẩm.\n\n" +
           JSON.stringify(data, null, 2),
           "error"
         );
 
         return;
+
       }
 
-      content.value = data.text;
-      counter.textContent = data.text.length;
+
+      productData =
+        data.product;
+
+
+      productTitle.textContent =
+        productData.title;
+
+
+      productDescription.textContent =
+        productData.description ||
+        "Không có mô tả sản phẩm.";
+
+
+      showImages(
+        productData.images || []
+      );
+
+
+      productCard.style.display =
+        "block";
+
+
+      postsCard.style.display =
+        "none";
+
 
       showStatus(
-        "✅ AI đã tạo bài. Bạn có thể chỉnh sửa trước khi đăng.",
+        productStatus,
+        "✅ Đã lấy sản phẩm thành công.",
         "success"
       );
 
+
     } catch (error) {
 
       showStatus(
-        "❌ Không kết nối được AI.\n\n" +
+        productStatus,
+        "❌ Không kết nối được server.\n\n" +
         error.message,
         "error"
       );
 
     } finally {
 
-      setGenerating(false);
-    }
-  }
+      getProduct.disabled = false;
 
-  generateButton.addEventListener("click", generatePost);
-
-  rewriteButton.addEventListener("click", generatePost);
-
-  publishButton.addEventListener("click", async () => {
-
-    const text = content.value.trim();
-
-    if (!text) {
-      showStatus(
-        "❌ Chưa có nội dung để đăng.",
-        "error"
-      );
-
-      return;
-    }
-
-    publishButton.disabled = true;
-    publishButton.textContent = "⏳ Đang đăng...";
-
-    showStatus(
-      "📡 Đang gửi bài lên Threads...",
-      "loading"
-    );
-
-    try {
-
-      const response = await fetch("/api/publish", {
-
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          text: text
-        })
-
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-
-        showStatus(
-          "🎉 ĐĂNG THÀNH CÔNG!\n\n" +
-          "Thread ID: " +
-          data.thread_id,
-          "success"
-        );
-
-      } else {
-
-        showStatus(
-          "❌ Đăng thất bại.\n\n" +
-          JSON.stringify(data, null, 2),
-          "error"
-        );
-
-      }
-
-    } catch (error) {
-
-      showStatus(
-        "❌ Lỗi kết nối server.\n\n" +
-        error.message,
-        "error"
-      );
-
-    } finally {
-
-      publishButton.disabled = false;
-      publishButton.textContent = "🚀 ĐĂNG LÊN THREADS";
+      getProduct.textContent =
+        "🔍 LẤY SẢN PHẨM";
 
     }
 
   });
+
+
+  generatePosts.addEventListener("click", async () => {
+
+    if (!productData) {
+
+      return;
+
+    }
+
+
+    generatePosts.disabled = true;
+
+    generatePosts.textContent =
+      "🤖 AI đang viết 5 bài...";
+
+
+    try {
+
+      const response =
+        await fetch("/api/generate-products", {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            title:
+              productData.title,
+
+            description:
+              productData.description,
+
+            url:
+              productData.url,
+
+            images:
+              productData.images
+
+          })
+
+        });
+
+
+      const data =
+        await response.json();
+
+
+      if (!data.success) {
+
+        postsCard.style.display =
+          "block";
+
+
+        postsContainer.innerHTML =
+          `<div class="status error">
+            ❌ AI tạo bài thất bại.
+
+            ${escapeHtml(
+              JSON.stringify(data, null, 2)
+            )}
+          </div>`;
+
+        return;
+
+      }
+
+
+      renderPosts(
+        data.posts || []
+      );
+
+
+      postsCard.style.display =
+        "block";
+
+
+      postsCard.scrollIntoView({
+        behavior: "smooth"
+      });
+
+
+    } catch (error) {
+
+      postsCard.style.display =
+        "block";
+
+
+      postsContainer.innerHTML =
+        `<div class="status error">
+          ❌ Không kết nối được AI.
+
+          ${escapeHtml(error.message)}
+        </div>`;
+
+    } finally {
+
+      generatePosts.disabled = false;
+
+      generatePosts.textContent =
+        "✨ AI TẠO 5 BÀI THREADS";
+
+    }
+
+  });
+
+
+  function renderPosts(posts) {
+
+    postsContainer.innerHTML = "";
+
+
+    posts.forEach((post, index) => {
+
+      const div =
+        document.createElement("div");
+
+      div.className = "post";
+
+
+      div.innerHTML = `
+
+        <div class="post-number">
+          Bài ${index + 1}
+        </div>
+
+        <img
+          class="post-image"
+          src="${escapeAttribute(
+            selectedImage
+          )}"
+          style="${
+            selectedImage
+              ? "display:block;"
+              : "display:none;"
+          }"
+        >
+
+        <textarea>${escapeHtml(
+          post.caption || ""
+        )}</textarea>
+
+        <div class="post-actions">
+
+          <button
+            class="secondary choose-image"
+          >
+            🖼️ Đổi ảnh
+          </button>
+
+          <button
+            class="publish-post"
+          >
+            🚀 Đăng Threads
+          </button>
+
+        </div>
+
+        <div class="status post-status"></div>
+
+      `;
+
+
+      const chooseImage =
+        div.querySelector(
+          ".choose-image"
+        );
+
+
+      const publish =
+        div.querySelector(
+          ".publish-post"
+        );
+
+
+      const image =
+        div.querySelector(
+          ".post-image"
+        );
+
+
+      const textarea =
+        div.querySelector(
+          "textarea"
+        );
+
+
+      const status =
+        div.querySelector(
+          ".post-status"
+        );
+
+
+      chooseImage.addEventListener(
+        "click",
+        () => {
+
+          if (!productData.images?.length) {
+
+            showStatus(
+              status,
+              "Không có ảnh để chọn.",
+              "error"
+            );
+
+            return;
+
+          }
+
+
+          const current =
+            productData.images.indexOf(
+              image.src
+            );
+
+
+          const next =
+            (current + 1) %
+            productData.images.length;
+
+
+          image.src =
+            productData.images[next];
+
+
+          image.style.display =
+            "block";
+
+        }
+      );
+
+
+      publish.addEventListener(
+        "click",
+        async () => {
+
+          const text =
+            textarea.value.trim();
+
+
+          if (!text) {
+
+            showStatus(
+              status,
+              "❌ Bài viết đang trống.",
+              "error"
+            );
+
+            return;
+
+          }
+
+
+          publish.disabled = true;
+
+          publish.textContent =
+            "⏳ Đang đăng...";
+
+
+          showStatus(
+            status,
+            "📡 Đang đăng lên Threads...",
+            "loading"
+          );
+
+
+          try {
+
+            const response =
+              await fetch(
+                "/api/publish",
+                {
+
+                  method: "POST",
+
+                  headers: {
+                    "Content-Type":
+                      "application/json"
+                  },
+
+                  body: JSON.stringify({
+                    text
+                  })
+
+                }
+              );
+
+
+            const data =
+              await response.json();
+
+
+            if (!data.success) {
+
+              showStatus(
+                status,
+                "❌ Đăng thất bại.\n\n" +
+                JSON.stringify(
+                  data,
+                  null,
+                  2
+                ),
+                "error"
+              );
+
+              return;
+
+            }
+
+
+            showStatus(
+              status,
+              "🎉 ĐĂNG THÀNH CÔNG!\n\n" +
+              "Thread ID: " +
+              (
+                data.thread_id ||
+                data.id ||
+                "Đã đăng"
+              ),
+              "success"
+            );
+
+
+          } catch (error) {
+
+            showStatus(
+              status,
+              "❌ Lỗi kết nối.\n\n" +
+              error.message,
+              "error"
+            );
+
+          } finally {
+
+            publish.disabled = false;
+
+            publish.textContent =
+              "🚀 Đăng Threads";
+
+          }
+
+        }
+      );
+
+
+      postsContainer.appendChild(div);
+
+    });
+
+  }
+
+
+  function escapeHtml(value) {
+
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  function escapeAttribute(value) {
+
+    return escapeHtml(value);
+
+  }
+
 </script>
 
 </body>
