@@ -27,12 +27,33 @@ export default async function handler(req, res) {
       });
     }
 
+    const hostname = productUrl.hostname.toLowerCase();
+
+    const isTaobao =
+      hostname.includes("taobao.com") ||
+      hostname.includes("tmall.com") ||
+      hostname.includes("tmall.hk");
+
+    // ==============================
+    // LẤY TRANG SẢN PHẨM
+    // ==============================
+
     const response = await fetch(productUrl.href, {
       method: "GET",
+      redirect: "follow",
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150 Safari/537.36",
-        "Accept-Language": "vi-VN,vi;q=0.9,en;q=0.8"
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+
+        "Accept":
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+
+        "Accept-Language":
+          "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+
+        "Cache-Control": "no-cache",
+
+        "Pragma": "no-cache"
       }
     });
 
@@ -45,83 +66,328 @@ export default async function handler(req, res) {
 
     const html = await response.text();
 
-    function getMeta(property) {
-      const regex = new RegExp(
-        `<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']*)["']`,
-        "i"
-      );
+    // ==============================
+    // GIẢI MÃ HTML
+    // ==============================
 
-      const match = html.match(regex);
+    function decodeHtml(value) {
+      if (!value) return "";
 
-      if (match) {
-        return match[1]
-          .replace(/&amp;/g, "&")
-          .replace(/&quot;/g, '"')
-          .trim();
+      return value
+        .replace(/\\u002F/g, "/")
+        .replace(/\\u003A/g, ":")
+        .replace(/\\u0026/g, "&")
+        .replace(/\\u003F/g, "?")
+        .replace(/\\u003D/g, "=")
+        .replace(/\\u0022/g, '"')
+        .replace(/&amp;/g, "&")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&#x27;/gi, "'")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .trim();
+    }
+
+    // ==============================
+    // LẤY META
+    // ==============================
+
+    function getMeta(name) {
+      const patterns = [
+        new RegExp(
+          `<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']+)["']`,
+          "i"
+        ),
+
+        new RegExp(
+          `<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${name}["']`,
+          "i"
+        )
+      ];
+
+      for (const regex of patterns) {
+        const match = html.match(regex);
+
+        if (match && match[1]) {
+          return decodeHtml(match[1]);
+        }
       }
 
       return "";
     }
 
+    // ==============================
+    // TITLE
+    // ==============================
+
     function getTitle() {
-      const match = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      const titleMatch = html.match(
+        /<title[^>]*>([\s\S]*?)<\/title>/i
+      );
 
-      if (!match) return "";
+      if (!titleMatch) return "";
 
-      return match[1]
-        .replace(/<[^>]+>/g, "")
-        .replace(/&amp;/g, "&")
-        .replace(/&quot;/g, '"')
-        .trim();
+      return decodeHtml(
+        titleMatch[1]
+          .replace(/<[^>]+>/g, "")
+      );
     }
 
-    const title =
+    let title =
       getMeta("og:title") ||
       getMeta("twitter:title") ||
       getTitle();
 
-    const mainImage =
-      getMeta("og:image") ||
-      getMeta("twitter:image");
+    // ==============================
+    // DESCRIPTION
+    // ==============================
 
-    const description =
+    let description =
       getMeta("og:description") ||
-      getMeta("description");
+      getMeta("description") ||
+      "";
+
+    // ==============================
+    // LẤY IMAGE
+    // ==============================
 
     const images = [];
 
-    if (mainImage) {
-      images.push(mainImage);
-    }
+    function addImage(image) {
+      if (!image) return;
 
-    // Tìm thêm một số ảnh tuyệt đối trong HTML
-    const imageRegex =
-      /https?:\/\/[^"'<> ]+\.(?:jpg|jpeg|png|webp)(?:\?[^"'<> ]*)?/gi;
+      image = decodeHtml(image);
 
-    const matches = html.match(imageRegex) || [];
+      // Bỏ javascript
+      if (
+        image.startsWith("javascript:") ||
+        image.startsWith("data:")
+      ) {
+        return;
+      }
 
-    for (const image of matches) {
+      // Chỉ nhận http/https
+      if (
+        !image.startsWith("http://") &&
+        !image.startsWith("https://")
+      ) {
+        return;
+      }
+
+      // ==============================
+      // LOẠI ẢNH LOGO / PLACEHOLDER
+      // ==============================
+
+      const lower = image.toLowerCase();
+
+      const blockedWords = [
+        "logo",
+        "taobao_logo",
+        "tmall_logo",
+        "default",
+        "placeholder",
+        "loading",
+        "avatar",
+        "icon",
+        "favicon",
+        "sprite",
+        "seller",
+        "shop_logo",
+        "tb-icon"
+      ];
+
+      const isBlocked = blockedWords.some(word =>
+        lower.includes(word)
+      );
+
+      if (isBlocked) return;
+
+      // Không thêm trùng
       if (!images.includes(image)) {
         images.push(image);
       }
-
-      if (images.length >= 8) break;
     }
+
+    // Meta images
+    addImage(getMeta("og:image"));
+    addImage(getMeta("og:image:url"));
+    addImage(getMeta("twitter:image"));
+
+    // ==============================
+    // TÌM ẢNH TRONG HTML
+    // ==============================
+
+    const imagePatterns = [
+      // URL bình thường
+      /https?:\/\/[^"'\\<> ]+\.(?:jpg|jpeg|png|webp)(?:\?[^"'\\<> ]*)?/gi,
+
+      // URL trong JSON escaped
+      /https?:\\\/\\\/[^"'\\<> ]+\.(?:jpg|jpeg|png|webp)(?:\\?[^"'\\<> ]*)?/gi,
+
+      // Taobao CDN
+      /https?:\/\/[^"'\\<> ]*(?:alicdn\.com|taobaocdn\.com|tbcdn\.cn)[^"'\\<> ]+/gi,
+
+      // HTTPS escaped
+      /https?:\\\/\\\/[^"'\\<> ]*(?:alicdn\.com|taobaocdn\.com|tbcdn\.cn)[^"'\\<> ]+/gi
+    ];
+
+    for (const regex of imagePatterns) {
+      const matches = html.match(regex) || [];
+
+      for (let image of matches) {
+        image = image
+          .replace(/\\\//g, "/")
+          .replace(/\\u002F/g, "/")
+          .replace(/\\u003A/g, ":")
+          .replace(/\\u0026/g, "&");
+
+        addImage(image);
+
+        if (images.length >= 20) break;
+      }
+
+      if (images.length >= 20) break;
+    }
+
+    // ==============================
+    // TÌM src / data-src CỦA IMG
+    // ==============================
+
+    const imgRegex =
+      /<(?:img|source)[^>]+(?:src|data-src|data-original|data-lazy-src)=["']([^"']+)["']/gi;
+
+    let match;
+
+    while ((match = imgRegex.exec(html)) !== null) {
+      let image = decodeHtml(match[1]);
+
+      if (image.startsWith("//")) {
+        image = "https:" + image;
+      }
+
+      addImage(image);
+
+      if (images.length >= 20) break;
+    }
+
+    // ==============================
+    // TÌM ẢNH TAOBAO BẰNG JSON
+    // ==============================
+
+    const jsonImageRegex =
+      /["'](?:picUrl|pic_url|imageUrl|image_url|imgUrl|img_url)["']\s*:\s*["']([^"']+)["']/gi;
+
+    while ((match = jsonImageRegex.exec(html)) !== null) {
+      let image = decodeHtml(match[1]);
+
+      if (image.startsWith("//")) {
+        image = "https:" + image;
+      }
+
+      addImage(image);
+
+      if (images.length >= 20) break;
+    }
+
+    // ==============================
+    // LÀM SẠCH URL ẢNH
+    // ==============================
+
+    const cleanedImages = [];
+
+    for (let image of images) {
+      try {
+        image = image
+          .replace(/\\u002F/g, "/")
+          .replace(/\\\//g, "/");
+
+        const parsed = new URL(image);
+
+        if (
+          parsed.protocol !== "http:" &&
+          parsed.protocol !== "https:"
+        ) {
+          continue;
+        }
+
+        // Ưu tiên ảnh HTTPS
+        image = parsed.href;
+
+        if (!cleanedImages.includes(image)) {
+          cleanedImages.push(image);
+        }
+      } catch {
+        // Bỏ URL lỗi
+      }
+    }
+
+    // ==============================
+    // KIỂM TRA TAOBAO
+    // ==============================
+
+    if (isTaobao) {
+      // Nếu chỉ lấy được ảnh logo / không có ảnh
+      // thì báo rõ thay vì đưa logo về frontend
+
+      if (cleanedImages.length === 0) {
+        return res.status(200).json({
+          success: false,
+          source: "taobao",
+          error:
+            "Taobao đang chặn việc lấy ảnh trực tiếp. Hãy thử dùng link sản phẩm đầy đủ dạng item.taobao.com hoặc dùng API trung gian.",
+          product: {
+            url: productUrl.href,
+            title: title || "Không lấy được tên sản phẩm",
+            description,
+            images: []
+          }
+        });
+      }
+    }
+
+    // ==============================
+    // TÊN SẢN PHẨM
+    // ==============================
+
+    if (
+      !title ||
+      title.toLowerCase().includes("taobao") ||
+      title.length < 3
+    ) {
+      title = "Sản phẩm từ " + hostname;
+    }
+
+    // ==============================
+    // TRẢ KẾT QUẢ
+    // ==============================
 
     return res.status(200).json({
       success: true,
+
       product: {
         url: productUrl.href,
-        title: title || "Sản phẩm chưa có tên",
-        description: description || "",
-        images
+
+        title,
+
+        description,
+
+        images: cleanedImages.slice(0, 12),
+
+        source: isTaobao
+          ? "taobao"
+          : hostname
       }
     });
 
   } catch (error) {
+    console.error("PRODUCT API ERROR:", error);
+
     return res.status(500).json({
       success: false,
-      error: error.message
+      error:
+        error?.message ||
+        "Không thể lấy thông tin sản phẩm."
     });
   }
 }
