@@ -113,6 +113,12 @@
       background: #eee;
     }
 
+    .product-price {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
     .product-title {
       font-size: 22px;
       font-weight: bold;
@@ -301,6 +307,11 @@
       <div>
 
         <div
+          id="productPrice"
+          class="product-price"
+        ></div>
+
+        <div
           id="productTitle"
           class="product-title"
         ></div>
@@ -363,6 +374,9 @@
 
   const productCard =
     document.getElementById("productCard");
+
+  const productPrice =
+    document.getElementById("productPrice");
 
   const productTitle =
     document.getElementById("productTitle");
@@ -557,6 +571,11 @@
         data.product;
 
 
+      productPrice.textContent =
+        productData.priceText && productData.priceText !== "Chưa lấy được giá"
+          ? "💰 " + productData.priceText
+          : "💰 Chưa lấy được giá tự động";
+
       productTitle.textContent =
         productData.title;
 
@@ -635,19 +654,9 @@
           },
 
           body: JSON.stringify({
-
-            title:
-              productData.title,
-
-            description:
-              productData.description,
-
-            url:
-              productData.url,
-
-            images:
-              productData.images
-
+            product: productData,
+            images: productData.images || [],
+            count: 5
           })
 
         });
@@ -747,9 +756,13 @@
           }"
         >
 
+        <div class="small post-help">✏️ Bạn có thể sửa bài trước khi đăng.</div>
+
         <textarea>${escapeHtml(
-          post.caption || ""
+          typeof post === "string" ? post : (post.caption || "")
         )}</textarea>
+
+        <button class="secondary save-post" type="button">💾 Lưu chỉnh sửa</button>
 
         <div class="post-actions">
 
@@ -800,6 +813,19 @@
         div.querySelector(
           ".post-status"
         );
+
+      const savePost =
+        div.querySelector(".save-post");
+
+      savePost.addEventListener("click", () => {
+        const key = `tanh_threads_${productData?.url || "product"}_${index}`;
+        localStorage.setItem(key, textarea.value);
+        showStatus(status, "✅ Đã lưu chỉnh sửa bài viết.", "success");
+      });
+
+      const savedKey = `tanh_threads_${productData?.url || "product"}_${index}`;
+      const savedText = localStorage.getItem(savedKey);
+      if (savedText) textarea.value = savedText;
 
 
       chooseImage.addEventListener(
