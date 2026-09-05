@@ -7,11 +7,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    const {
-      product,
-      images = [],
-      count = 5
-    } = req.body || {};
+    const body = req.body || {};
+
+    // =========================
+    // HỖ TRỢ CẢ 2 FORMAT
+    // =========================
+    // Format frontend hiện tại: { title, description, url, images }
+    // Format cũ: { product: {...}, images, count }
+
+    let product = body.product;
+    let images = body.images || [];
+    const count = body.count || 5;
+
+    // Nếu frontend gửi dạng phẳng thì tự ghép thành product
+    if (!product && (body.title || body.url)) {
+      product = {
+        title: body.title || "",
+        description: body.description || "",
+        url: body.url || "",
+        images: body.images || []
+      };
+      images = body.images || [];
+    }
 
     // =========================
     // KIỂM TRA API KEY
@@ -30,7 +47,7 @@ export default async function handler(req, res) {
     // KIỂM TRA DỮ LIỆU
     // =========================
 
-    if (!product) {
+    if (!product || (!product.title && !product.url)) {
       return res.status(400).json({
         success: false,
         error: "Thiếu thông tin sản phẩm."
@@ -118,7 +135,6 @@ FORMAT BẮT BUỘC:
             generationConfig: {
               temperature: 0.9,
               maxOutputTokens: 2500,
-
               responseMimeType: "application/json"
             }
           })
@@ -167,11 +183,14 @@ FORMAT BẮT BUỘC:
             );
           }
 
+          // Chuẩn hóa về dạng frontend đang expect: array of { caption }
+          const posts = result.posts.slice(0, count).map(caption => ({
+            caption: typeof caption === "string" ? caption : (caption.caption || caption.text || String(caption))
+          }));
+
           return res.status(200).json({
             success: true,
-
-            posts: result.posts.slice(0, count),
-
+            posts,
             attempts: attempt
           });
         }
